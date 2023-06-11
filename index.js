@@ -8,6 +8,12 @@ const port = process.env.PORT || 4000;
 // middlewire use
 app.use(cors())
 app.use(express.json());
+app.post("/jwt", (req, res) => {
+    const user = req.body;
+    console.log(user)
+    const token = jwt.sign(user, process.env.jwt_token, {expiresIn: '1h'})
+    res.send({token})
+})
 
 
 // MONGO DB 
