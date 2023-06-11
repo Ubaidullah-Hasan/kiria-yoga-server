@@ -36,6 +36,12 @@ async function run() {
         const courceCollection = client.db("kiriya_yoga").collection("cources");
 
         // classes 
+        app.post("/classes", async(req, res) => {
+            const newClass = req.body;
+            const result = await classCollection.insertOne(newClass)
+            console.log(newClass)
+            res.send(result);
+        })
         app.get("/classes", async(req, res) => {
             const result = await classCollection.find().toArray();
             res.send(result)
@@ -48,6 +54,11 @@ async function run() {
 
 
         // user
+        app.get("/users", async(req, res) => {
+            const result = await userCollection.find().toArray();
+            res.send(result)
+        })
+
         app.get("/instructors", async(req, res) => {
             const result = await userCollection.find({ rule: "instructor" }).toArray();
             res.send(result)
