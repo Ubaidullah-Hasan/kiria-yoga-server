@@ -3,17 +3,28 @@ const express = require("express");
 const app = express()
 const cors = require('cors');
 require("dotenv").config();
+const jwt = require("jsonwebtoken");
 const port = process.env.PORT || 4000;
 
 // middlewire use
 app.use(cors())
 app.use(express.json());
-app.post("/jwt", (req, res) => {
-    const user = req.body;
-    console.log(user)
-    const token = jwt.sign(user, process.env.jwt_token, {expiresIn: '1h'})
-    res.send({token})
-})
+
+const verifyJWT = (req, res, next) => {
+    console.log("hitting JWT")
+    const autorization = req.headers.autorization;
+    if (!autorization) {
+        return res.status(401).send({ error: true, message: "unautorized access" })
+    }
+    const token = autorization.split(" ")[1];
+    jwt.verify(token, process.env.ACCESS_KEY_SECRET, (error, decoded) => {
+        if (error) {
+            return res.status(401).send({ error: true, message: "unautorized access" })
+        }
+        req.decoded = decoded;
+        next();
+    })
+}
 
 
 // MONGO DB 
@@ -32,9 +43,32 @@ async function run() {
     try {
         // Connect the client to the server	(optional starting in v4.7)
         await client.connect();
+        // create verify Admin middlewire
+        const verifyAdmin = async (req, res, next) => {
+            const email = req.decoded.email;
+            console.log(email)
+            const query = { email: email };
+            const user = await userCollection.findOne(query)
+            if (user?.role !== "admin") {
+                return res.status(403).send({ error: true, message: "forbidden" })
+            }
+            next();
+        }
+
+
         // Send a ping to confirm a successful connection
         await client.db("admin").command({ ping: 1 });
         console.log("Pinged your deployment. You successfully connected to MongoDB!");
+
+
+        // ACCESS KEY JWT START
+        app.post("/jwt", (req, res) => {
+            const user = req.body;
+            console.log(user);
+            const token = jwt.sign(user, process.env.jwt_token, { expiresIn: "1h" })
+            res.send({ token });
+        })
+
 
         // collection name
         const classCollection = client.db("kiriya_yoga").collection("classes");
@@ -42,7 +76,7 @@ async function run() {
         const courceCollection = client.db("kiriya_yoga").collection("cources");
 
         // classes 
-        app.post("/classes", async(req, res) => {
+        app.post("/classes",verifyJWT, async(req, res) => {
             const newClass = req.body;
             const result = await classCollection.insertOne(newClass)
             console.log(newClass)
