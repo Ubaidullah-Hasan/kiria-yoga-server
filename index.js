@@ -32,10 +32,20 @@ async function run() {
 
         // collection name
         const classCollection = client.db("kiriya_yoga").collection("classes");
+        const instructorCollection = client.db("kiriya_yoga").collection("instractor");
 
+        // classes 
         app.get("/classes", async(req, res) => {
-            const classes = await classCollection.find().toArray();
-            res.send(classes)
+            const result = await classCollection.find().sort({ studentsCount: -1 }).limit(6).project({ image: 1 }).toArray();
+            res.send(result)
+        })
+
+
+
+        // instructor
+        app.get("/instructors", async(req, res) => {
+            const result = await instructorCollection.find().sort({ totalStudents: -1 }).limit(6).project({ image: 1 }).toArray();
+            res.send(result)
         })
 
 
