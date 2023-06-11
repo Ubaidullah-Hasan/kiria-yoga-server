@@ -9,7 +9,7 @@ const port = process.env.PORT || 4000;
 app.use(cors())
 app.use(express.json());
 
-console.log(process.env.DB_NAME)
+
 // MONGO DB 
 const uri = `mongodb+srv://${process.env.DB_NAME}:${process.env.DB_PASS}@cluster0.clipjzr.mongodb.net/?retryWrites=true&w=majority`;
 
@@ -30,6 +30,13 @@ async function run() {
         await client.db("admin").command({ ping: 1 });
         console.log("Pinged your deployment. You successfully connected to MongoDB!");
 
+        // collection name
+        const classCollection = client.db("kiriya_yoga").collection("classes");
+
+        app.get("/classes", async(req, res) => {
+            const classes = await classCollection.find().toArray();
+            res.send(classes)
+        })
 
 
 
