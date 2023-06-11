@@ -32,20 +32,39 @@ async function run() {
 
         // collection name
         const classCollection = client.db("kiriya_yoga").collection("classes");
-        const instructorCollection = client.db("kiriya_yoga").collection("instractor");
+        const userCollection = client.db("kiriya_yoga").collection("users");
+        const courceCollection = client.db("kiriya_yoga").collection("cources");
 
         // classes 
         app.get("/classes", async(req, res) => {
+            const result = await classCollection.find().toArray();
+            res.send(result)
+        })
+        app.get("/classes-img", async(req, res) => {
             const result = await classCollection.find().sort({ studentsCount: -1 }).limit(6).project({ image: 1 }).toArray();
             res.send(result)
         })
 
 
 
-        // instructor
+        // user
         app.get("/instructors", async(req, res) => {
-            const result = await instructorCollection.find().sort({ totalStudents: -1 }).limit(6).project({ image: 1 }).toArray();
+            const result = await userCollection.find({ rule: "instructor" }).toArray();
             res.send(result)
+        })
+
+        app.get("/instructors-img", async(req, res) => {
+            const result = await userCollection.find().sort({ totalStudents: -1 }).limit(6).project({ image: 1 }).toArray();
+            res.send(result)
+        })
+
+        
+        // /select-cources
+        app.post("/select-cources", async(req, res) => {
+            const cources = req.body;
+            const result = await courceCollection.insertOne(cources);
+            console.log(cources);
+            res.send(result);
         })
 
 
