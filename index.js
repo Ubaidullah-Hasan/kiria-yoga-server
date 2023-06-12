@@ -7,7 +7,13 @@ const jwt = require("jsonwebtoken");
 const stripe = require("stripe")(process.env.PAYMENT_SECRETE_KEY);
 const port = process.env.PORT || 4000;
 
-// middlewire use
+
+// use middlewire
+const corsConfig = {
+    origin: '*',
+    credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'DELETE']
+}
 app.use(cors())
 app.use(express.json());
 
