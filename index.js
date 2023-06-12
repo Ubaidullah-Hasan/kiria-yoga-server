@@ -79,20 +79,20 @@ async function run() {
 
 
         // classes ******************************
-        app.post("/classes",verifyJWT, async(req, res) => {
+        app.post("/classes", verifyJWT, async (req, res) => {
             const newClass = req.body;
             const result = await classCollection.insertOne(newClass)
             console.log(newClass)
             res.send(result);
             // add class
         })
-        app.get("/classes", async(req, res) => {
+        app.get("/classes", async (req, res) => {
             const result = await classCollection.find().toArray();
             res.send(result)
             // read class and show client site
         })
 
-        app.get("/classes-img", async(req, res) => {
+        app.get("/classes-img", async (req, res) => {
             const result = await classCollection.find().sort({ studentsCount: -1 }).limit(6).project({ image: 1 }).toArray();
             res.send(result)
             // only class image read limit 6, sort decending student number
@@ -109,14 +109,14 @@ async function run() {
             res.send(result);
         })
 
-        app.get("/select-cources/:email", verifyJWT, async(req, res) => {
+        app.get("/select-cources/:email", verifyJWT, async (req, res) => {
             const email = req.params.email;
             console.log(email);
-            const classes = await courceCollection.find({ email: email}).toArray();
+            const classes = await courceCollection.find({ email: email }).toArray();
             res.send(classes)
         })
 
-        app.delete("/select-cources/:id", async(req, res) => {
+        app.delete("/select-cources/:id", async (req, res) => {
             const id = req.params.id;
             console.log(id);
             const classes = await courceCollection.deleteOne({ _id: new ObjectId(id) });
@@ -128,19 +128,19 @@ async function run() {
 
 
         // user ******************************
-        app.post("/users", async(req, res) => {
+        app.post("/users", async (req, res) => {
             const user = req.body;
-            const query = {email: user.email}
+            const query = { email: user.email }
             const existingUser = await userCollection.findOne(query);
-            if(existingUser){
-                return res.send({message: "User already exist"})
+            if (existingUser) {
+                return res.send({ message: "User already exist" })
             }
             console.log(user)
             const result = await userCollection.insertOne(user);
             res.send(result);
         })
 
-        app.get("/users", async(req, res) => {
+        app.get("/users", async (req, res) => {
             const result = await userCollection.find().toArray();
             res.send(result)
         })
@@ -159,12 +159,12 @@ async function run() {
             res.send(result)
         })
 
-        app.get("/instructors", async(req, res) => {
+        app.get("/instructors", async (req, res) => {
             const result = await userCollection.find({ rule: "instructor" }).toArray();
             res.send(result)
         })
 
-        app.get("/instructors-img", async(req, res) => {
+        app.get("/instructors-img", async (req, res) => {
             const result = await userCollection.find().sort({ totalStudents: -1 }).limit(6).project({ image: 1 }).toArray();
             res.send(result)
         })
@@ -174,7 +174,7 @@ async function run() {
 
 
         // payment indent
-        app.post("/create-payment-intent", async (req, res) => {
+        app.post("/create-payment-intent", verifyJWT, async (req, res) => {
             const { totalPrice } = req.body;
             console.log("price", totalPrice)
             const amount = totalPrice * 100;
@@ -189,13 +189,20 @@ async function run() {
         })
 
         // Payment related API
-        app.post("/payment", async (req, res) => {
+        app.post("/payment", verifyJWT, async (req, res) => {
             const payment = req.body;
             console.log(payment);
             const result = await paymentCollection.insertOne(payment);
             const query = { _id: { $in: payment.cartItems.map(id => new ObjectId(id)) } }
             const deletedResult = await courceCollection.deleteMany(query)
             res.send({ result, deletedResult });
+        })
+
+        app.get("/payment/:email", verifyJWT, async (req, res) => {
+            const email = req.params.email;
+            console.log(email)
+            const result = await paymentCollection.find({ email: email }).toArray();
+            res.send(result);
         })
 
 
