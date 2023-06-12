@@ -17,7 +17,7 @@ const verifyJWT = (req, res, next) => {
         return res.status(401).send({ error: true, message: "unautorized access" })
     }
     const token = autorization.split(" ")[1];
-    jwt.verify(token, process.env.ACCESS_KEY_SECRET, (error, decoded) => {
+    jwt.verify(token, process.env.jwt_token, (error, decoded) => {
         if (error) {
             return res.status(401).send({ error: true, message: "unautorized access" })
         }
@@ -75,25 +75,49 @@ async function run() {
         const userCollection = client.db("kiriya_yoga").collection("users");
         const courceCollection = client.db("kiriya_yoga").collection("cources");
 
-        // classes 
+        // classes ******************************
         app.post("/classes",verifyJWT, async(req, res) => {
             const newClass = req.body;
             const result = await classCollection.insertOne(newClass)
             console.log(newClass)
             res.send(result);
+            // add class
         })
         app.get("/classes", async(req, res) => {
             const result = await classCollection.find().toArray();
             res.send(result)
+            // read class and show client site
         })
+
         app.get("/classes-img", async(req, res) => {
             const result = await classCollection.find().sort({ studentsCount: -1 }).limit(6).project({ image: 1 }).toArray();
             res.send(result)
+            // only class image read limit 6, sort decending student number
         })
 
 
 
-        // user
+
+        // /select-cources ******************************
+        app.post("/select-cources", verifyJWT, async (req, res) => {
+            const cources = req.body;
+            const result = await courceCollection.insertOne(cources);
+            console.log(cources);
+            res.send(result);
+        })
+
+        app.get("/select-cources/:email", verifyJWT, async(req, res) => {
+            const email = req.params.email;
+            console.log(email);
+            const classes = await courceCollection.find({ email: email}).toArray();
+            res.send(classes)
+        })
+
+
+
+
+
+        // user ******************************
         app.post("/users", async(req, res) => {
             const user = req.body;
             const query = {email: user.email}
@@ -111,6 +135,20 @@ async function run() {
             res.send(result)
         })
 
+        app.get("/users/admin/:email", verifyJWT, async (req, res) => {
+            const email = req.params.email
+            const query = { email: email }
+            console.log(email)
+
+            if (req.decoded.email !== email) {
+                res.send({ admin: false })
+            }
+
+            const user = await userCollection.findOne(query)
+            const result = { admin: user?.rule === "admin" }
+            res.send(result)
+        })
+
         app.get("/instructors", async(req, res) => {
             const result = await userCollection.find({ rule: "instructor" }).toArray();
             res.send(result)
@@ -121,14 +159,6 @@ async function run() {
             res.send(result)
         })
 
-        
-        // /select-cources
-        app.post("/select-cources", async(req, res) => {
-            const cources = req.body;
-            const result = await courceCollection.insertOne(cources);
-            console.log(cources);
-            res.send(result);
-        })
 
 
 
