@@ -4,6 +4,7 @@ const app = express()
 const cors = require('cors');
 require("dotenv").config();
 const jwt = require("jsonwebtoken");
+const stripe = require("stripe")(process.env.PAYMENT_SECRETE_KEY);
 const port = process.env.PORT || 4000;
 
 // middlewire use
@@ -74,6 +75,8 @@ async function run() {
         const classCollection = client.db("kiriya_yoga").collection("classes");
         const userCollection = client.db("kiriya_yoga").collection("users");
         const courceCollection = client.db("kiriya_yoga").collection("cources");
+        const paymentCollection = client.db("kiriya_yoga").collection("payment");
+
 
         // classes ******************************
         app.post("/classes",verifyJWT, async(req, res) => {
@@ -165,6 +168,37 @@ async function run() {
             const result = await userCollection.find().sort({ totalStudents: -1 }).limit(6).project({ image: 1 }).toArray();
             res.send(result)
         })
+
+
+
+
+
+        // payment indent
+        app.post("/create-payment-intent", async (req, res) => {
+            const { totalPrice } = req.body;
+            console.log("price", totalPrice)
+            const amount = totalPrice * 100;
+            const paymentIntent = await stripe.paymentIntents.create({
+                amount: amount,
+                currency: "usd",
+                payment_method_types: ["card"]
+            });
+            res.send({
+                clientSecret: paymentIntent.client_secret,
+            })
+        })
+
+        // Payment related API
+        app.post("/payment", async (req, res) => {
+            const payment = req.body;
+            console.log(payment);
+            const result = await paymentCollection.insertOne(payment);
+            const query = { _id: { $in: payment.cartItems.map(id => new ObjectId(id)) } }
+            const deletedResult = await courceCollection.deleteMany(query)
+            res.send({ result, deletedResult });
+        })
+
+
 
 
 
