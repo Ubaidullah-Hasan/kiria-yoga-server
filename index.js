@@ -92,6 +92,38 @@ async function run() {
             // read class and show client site
         })
 
+        app.put("/classes", async (req, res) => {
+            const data = req.body;
+            console.log("data: ", data.studentsCount);
+
+            try {
+                const result = await classCollection.updateMany({}, { $set: { studentsCount: parseInt(data.studentsCount) } });
+                console.log("Classes data updated: ", result);
+
+                res.status(200).json({ message: "Classes data updated successfully" });
+            } catch (error) {
+                console.error("Error updating classes data: ", error);
+                res.status(500).json({ error: "Internal server error" });
+            }
+        });
+        
+        app.patch("/classes/:id", async (req, res) => {
+            const id = req.params.id;
+            const classes = req.body;
+            console.log(classes.status, id);
+
+            const filter = { _id: new ObjectId(id) }; // i dont understand***********************
+            const option = {upsert: true}
+            const updateUser = {
+                $set: {
+                    status: classes.status
+                },
+            };
+            const result = await classCollection.updateOne(filter, updateUser, option);
+            res.send(result)
+        })
+
+
         app.get("/classes/:email", verifyJWT, async (req, res) => {
             const email = req.params.email;
             console.log("/classes/:eamil", email);
