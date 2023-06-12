@@ -92,6 +92,13 @@ async function run() {
             // read class and show client site
         })
 
+        app.get("/classes/:email", verifyJWT, async (req, res) => {
+            const email = req.params.email;
+            console.log("/classes/:eamil", email);
+            const classes = await classCollection.find({ email: email }).toArray();
+            res.send(classes)
+        })
+
         app.get("/classes-img", async (req, res) => {
             const result = await classCollection.find().sort({ studentsCount: -1 }).limit(6).project({ image: 1 }).toArray();
             res.send(result)
@@ -111,7 +118,6 @@ async function run() {
 
         app.get("/select-cources/:email", verifyJWT, async (req, res) => {
             const email = req.params.email;
-            console.log(email);
             const classes = await courceCollection.find({ email: email }).toArray();
             res.send(classes)
         })
