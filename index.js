@@ -1,4 +1,4 @@
-const { MongoClient, ServerApiVersion } = require('mongodb');
+const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 const express = require("express");
 const app = express()
 const cors = require('cors');
@@ -110,6 +110,13 @@ async function run() {
             const email = req.params.email;
             console.log(email);
             const classes = await courceCollection.find({ email: email}).toArray();
+            res.send(classes)
+        })
+
+        app.delete("/select-cources/:id", async(req, res) => {
+            const id = req.params.id;
+            console.log(id);
+            const classes = await courceCollection.deleteOne({ _id: new ObjectId(id) });
             res.send(classes)
         })
 
